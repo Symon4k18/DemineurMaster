@@ -2,7 +2,12 @@
  * @file   main.c, JeuMatrice
  * @author Simon Jourdenais
  * @date   25 Septembre 2019
- * @brief  Le programme est en fait un jeu d'adresse sur une matrice de DEL. 
+ * @brief  Le programme est en fait un jeu de stratégie qui consiste à determiner
+ *  l'emplacement des mines et de les isoler en découvrant toutes les cases autre
+ *  que celles minées. L'utilisateur peut choisir de mettre un drapeau sur les cases 
+ * de son choix, en occurence celles qu'il croit minées.
+ * 
+ * Le jeu place  m_niveau
  * 
  * 
  * 
@@ -60,13 +65,7 @@ void enleveEspaceAutour(char x, char y);
 char m_tabMines[NB_LIGNE][NB_COL+1]; //Tableau des caractères affichés au LCD
 char m_tabVue[NB_LIGNE][NB_COL+1]; //Tableau contenant les mines, les espaces et les chiffres
 /*               ***** PROGRAMME PRINCPAL *****                             */
-enum direction
-{
-    haut=0,
-    bas,
-    droite,
-    gauche
-};
+
 /**
  * @brief  
  * @param  Aucun
@@ -81,16 +80,16 @@ void main(void)
     bool finPartie=false;
     /******** début du code********************/
 
-    initialisation();
-    init_serie();
-    lcd_init();
-    menuAccueil();
-    lcd_montreCurseur();
-    
-    initTabVue();
-    rempliMines(nbMines);
-    metToucheCombien();
-    afficheTabVue();
+    initialisation();   //initialise différents registres
+    init_serie();       //initialise d'autre registres pour activer le port série
+    lcd_init();         //initialise le LCD
+    menuAccueil();      //affiche le menuAccueil (# Labo et nom)
+
+    initTabVue();      //initialise le tableau m_tabVue ( le rempli de tuiles )
+    rempliMines(nbMines);   // place le nombre de mines voulu dans m_tabMines
+    metToucheCombien();     //place les chiffres autour des mines indiquant le nombre de mines auquelles elles touchent
+    afficheTabVue();        //fait apparaitre sur le lcd le tableau m_tabVue
+    lcd_montreCurseur();    //fait apparaitre le curseur
     while(1)
     {
         deplace(&posX,&posY);
@@ -128,7 +127,8 @@ void main(void)
 
 
 /**
- * @brief  
+ * @brief  Affichage de l'écran d'accueil ; Affiche le numéro du laboratoire 
+ * ainsi que mon nom
  * @param  Aucun
  * @return Aucun
  */
@@ -137,12 +137,12 @@ void menuAccueil(void)
     
     const char menuMsgs[2][20] = {"Laboratoire 6 ","Simon Jourdenais"};
     lcd_effaceAffichage();
-    lcd_putMessage(menuMsgs[0]);
+    lcd_putMessage(menuMsgs[0]);    //affiche le premier tableau de char ( premier string ) 
     lcd_gotoXY(1,3);
-    lcd_putMessage(menuMsgs[1]);
+    lcd_putMessage(menuMsgs[1]);     //affiche le deuxieme tableau de char ( deuxieme string ) 
     lcd_curseurHome();
     lcd_cacheCurseur();
-    __delay_ms(1000);
+    __delay_ms(1000);       //reste sur l'écran affiché pendant 1 seconde
     lcd_effaceAffichage();
 }
 
@@ -157,17 +157,21 @@ void initTabVue(void)
 {
     for(unsigned char i=0;i<NB_LIGNE;i++)
     {
-        for(unsigned char j=0;j<NB_COL;j++)
+        for(unsigned char j=0;j<NB_COL;j++)     //mets des tuiles dans toutes les espaces de m_tabvue
         {
             m_tabVue[i][j]=TUILE;
         }
     }
-    for(unsigned char k=0;k<NB_LIGNE;k++)
+    for(unsigned char k=0;k<NB_LIGNE;k++)       //rajoute un \0 a la fin des 4 tableau de 20 char, utile pour lcd_putMessage
     {
         m_tabVue[k][20]='\0';
     }
 }
- 
+ /**
+ * @brief  Affiche les 4 tableaux de 20 de m_tabVue
+ * @param  Aucun
+ * @return Aucun
+ */
 void afficheTabVue(void)
 {
     for(unsigned char i =0; i<NB_LIGNE;++i)
@@ -177,7 +181,11 @@ void afficheTabVue(void)
     }
 }
 
-
+/**
+ * @brief  Affiche les 4 tableaux de 20 de m_tabMines
+ * @param  Aucun
+ * @return Aucun
+ */
 void afficheTabMines(void)
 {
     for(unsigned char i =0; i<NB_LIGNE;++i)
@@ -186,6 +194,11 @@ void afficheTabMines(void)
         lcd_putMessage(m_tabMines[i]);
     }
 }
+/**
+ * @brief  Efface le tableau m_tabMines (rempli avec des espaces)
+ * @param  Aucun
+ * @return Aucun
+ */
 void videMines(void)
 {
     for(unsigned char i=0;i<NB_LIGNE;i++)
@@ -305,107 +318,8 @@ char calculToucheCombien(int ligne, int colonne)
     }
     return nombreTouche;
 }
-void verifieToucheEspace(int *tabVerif, int ligne, int colonne, unsigned char iCount)
-{
-    unsigned char i=0;
-    while(tabVerif[i]!='\0')
-        i++;
-    
-    if(ligne!=3)
-    {
-        if(m_tabMines[ligne+1][colonne]==' '&&m_tabVue[ligne+1][colonne]!=' ')
-        {
-            tabVerif[i]=(((ligne+1)*100)+colonne);
-            i++;
-        }
-    }
-    if(ligne!=0)
-    {
-        if(m_tabMines[ligne-1][colonne]==' '&&m_tabVue[ligne-1][colonne]!=' ')
-        {
-            tabVerif[i]=(((ligne-1)*100)+colonne);
-            i++;
-        }
-    }
-    if(colonne!=19)
-    {
-        if(m_tabMines[ligne][colonne+1]==' '&&m_tabVue[ligne][colonne+1]!=' ')
-        {
-            tabVerif[i]=((ligne*100)+(colonne+1));
-            i++;
-        }
-    }
-    if(colonne!=0)
-    {
-        if(m_tabMines[ligne][colonne-1]==' '&&m_tabVue[ligne][colonne-1]!=' ')
-        {
-            tabVerif[i]=((ligne*100)+(colonne-1));
-            i++;
-        }
-    }
-        if(ligne!=3&&colonne!=0)
-        {
-            if(m_tabMines[ligne+1][colonne-1]==' '&&m_tabVue[ligne+1][colonne-1]!=' ')
-            {
-                tabVerif[i]=(((ligne+1)*100)+(colonne-1));
-                i++;
-            }
-        }
-        if(ligne!=3&&colonne!=19)
-        {
-            if(m_tabMines[ligne+1][colonne+1]==' '&&m_tabVue[ligne+1][colonne+1]!=' ')
-            {
-                tabVerif[i]=(((ligne+1)*100)+(colonne+1));
-                i++;
-            }        
-        }
-        if(ligne!=0&&colonne!=0)
-        {
-            if(m_tabMines[ligne-1][colonne-1]==' '&&m_tabVue[ligne-1][colonne-1]!=' ')
-            {
-                tabVerif[i]=(((ligne-1)*100)+(colonne-1));
-                i++;
-            }        
-        }
-        if(ligne!=0&&colonne!=19)
-        {
-            if(m_tabMines[ligne-1][colonne+1]==' '&&m_tabVue[ligne-1][colonne+1]!=' ')
-            {
-                tabVerif[i]=(((ligne-1)*100)+(colonne+1));
-                i++;
-                
-            }        
-        }
-}
- void openSpaces(int ligne, int colonne)                //les valeurs sont celles du tableau (0-3,0-19)
-{
-    int caseVide[MAXCASES];
-    int i=0;
-    unsigned char xCoord;
-    unsigned char yCoord;
-    for(unsigned char j=0;j<MAXCASES;j++)
-        caseVide[j]='\0';
-    
-    verifieToucheEspace(caseVide, ligne, colonne, i);   // Mets les Coordonnées des cases Vides autour de la case clické dans caseVide
-    
-    while(caseVide[i]!='\0')
-    {
-        
-        xCoord=caseVide[i]/100;
-        yCoord=caseVide[i]%100;
-        verifieToucheEspace(caseVide, xCoord, yCoord, i);// Mets les Coordonnées des cases Vides autour de la case au coordonnées xCoord yCoord dans caseVide
-        /*
-        if(m_tabMines[xCoord][yCoord]!=MINE && m_tabVue[xCoord][yCoord]!=' ')
-        {
-            m_tabVue[xCoord][yCoord] = m_tabMines[xCoord][yCoord];
-            lcd_ecritChar(m_tabVue[xCoord][yCoord]);
-        }
-        else
-            enleveEspaceAutour(xCoord,yCoord); */ 
-        i++;
-    }
-   
-}
+
+
 /**
  * @brief Si la manette est vers la droite ou la gauche, on déplace le curseur 
  * d'une position (gauche, droite, bas et haut)
@@ -491,8 +405,6 @@ void enleveTuilesAutour(char x, char y)
             {
                 lcd_gotoXY(x+i,y+j);
                 m_tabVue[yTabLigne+j][xTabCol+i]=m_tabMines[yTabLigne+j][xTabCol+i];
-                if(m_tabMines[yTabLigne+j][xTabCol+i]==' ')
-                    openSpaces((yTabLigne+j),(xTabCol+i));
                 lcd_ecritChar(m_tabVue[yTabLigne+j][xTabCol+i]);
             }
             if(xTabCol==19&&i==0)
@@ -504,36 +416,7 @@ void enleveTuilesAutour(char x, char y)
     }
 
 }
-void enleveEspaceAutour(char x, char y)
-{
-    unsigned char xTabCol=x;
-    unsigned char yTabLigne=y;    
 
-
-    for(signed char j=-1;j<=1;j++)
-    {
-        if(y==0&&j==-1)
-            j=0;            //Evalue si la ligne est la premiere ( 0 ) et part le compteur i a zero de facon a ne pas ecrire dans la ligne -1
-        for(signed char i=-1;i<=1;i++)
-        {
-            if(x==0&&i==-1) 
-                i=0;
-            
-            if(m_tabMines[y+j][x+i]!=MINE&&m_tabVue[y+j][x+i]==TUILE)
-            {
-                lcd_gotoXY((x+1+i),(y+1+j));
-                m_tabVue[y+j][x+i]=m_tabMines[y+j][x+i];
-                lcd_ecritChar(m_tabVue[y+j][x+i]);
-            }
-            if(x==19&&i==0)
-                i=1;
-            
-        }
-        if(y==3&&j==0)
-            j=1;
-    }
-
-}
  
 /*
  * @brief Vérifie si gagné. On a gagné quand le nombre de tuiles non dévoilées
