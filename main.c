@@ -38,7 +38,6 @@
 #define TUILE 1 //caractère cgram d'une tuile
 #define MINE 2 //caractère cgram d'une mine
 #define DRAPEAU 3 // caractère cgram d'un drapeau
-#define MAXCASES 76
 /********************** PROTOTYPES *******************************************/
 void initialisation(void);
 void menuAccueil(void);
@@ -55,16 +54,14 @@ char getAnalog(char canal);
 void afficheTabVue(void);
 void afficheTabMines(void);
 void afficheGagne(void);
-void openSpaces(int ligneTab, int colTab);
-void verifieToucheEspace(int *tabVerif, int ligne, int colonne, unsigned char iCount);
-void enleveEspaceAutour(char x, char y);
-
 /****************** VARIABLES GLOBALES ****************************************/
 
 
 char m_tabMines[NB_LIGNE][NB_COL+1]; //Tableau des caractères affichés au LCD
 char m_tabVue[NB_LIGNE][NB_COL+1]; //Tableau contenant les mines, les espaces et les chiffres
+
 /*               ***** PROGRAMME PRINCPAL *****                             */
+
 
 /**
  * @brief  
@@ -87,41 +84,41 @@ void main(void)
 
     initTabVue();      //initialise le tableau m_tabVue ( le rempli de tuiles )
     rempliMines(nbMines);   // place le nombre de mines voulu dans m_tabMines
-    metToucheCombien();     //place les chiffres autour des mines indiquant le nombre de mines auquelles elles touchent
+    metToucheCombien();    // mets le chiffre correspondant au nombre de mines qu'une tuile touche pour chaque tuile s'il y a lieu    
     afficheTabVue();        //fait apparaitre sur le lcd le tableau m_tabVue
     lcd_montreCurseur();    //fait apparaitre le curseur
     while(1)
     {
-        deplace(&posX,&posY);
+        deplace(&posX,&posY);   //effectue un déplacement au coordonées x et y
         
-        if(PORT_SW)
+        if(PORT_SW)         // Si le bouton est appuyé
         {
-            finPartie=gagne(&nbMines);
-            if((!demine(posX,posY))||(finPartie==true))
+            finPartie=gagne(&nbMines);  //verifie si le joueur gagné et placela réponse dans finPartie
+            if((!demine(posX,posY))||(finPartie==true)) // vérifie si le joueur a perdu ou a gagné
             {
-                afficheTabMines();     //Show m_tabMines
-                while(!PORT_SW);
-                initTabVue();
-                rempliMines(nbMines);
-                metToucheCombien();
-                afficheTabVue();
+                afficheTabMines();     //montre où sont les mines
+                while(PORT_SW);     //reste sur l'écran des mines jusqu'à ce que le joueur appuie sur le bouton
+                initTabVue();       // met des tuiles dans les tableau m_tabVue a nouveau
+                rempliMines(nbMines);   // rempli le tableau m_tabMines du nombre de nbMines mines
+                metToucheCombien(); // mets le chiffre correspondant au nombre de mines que la tuile touche pour chaque tuile s'il y a lieu
+                afficheTabVue();    //fait apparaitre sur le lcd le tableau m_tabVue
             }
         }
-        else if(!BUILTIN_SW)
+        else if(!BUILTIN_SW)    // si le joueur appuie sur le bouton sur la carte de développement 
         {
-            if(m_tabVue[posY-1][posX-1]==TUILE)
+            if(m_tabVue[posY-1][posX-1]==TUILE) // Si la case est une tuile, un drapeau apparait aux coordonées 
             {
-                m_tabVue[posY-1][posX-1]=DRAPEAU;
-                lcd_ecritChar(DRAPEAU);
+                m_tabVue[posY-1][posX-1]=DRAPEAU;   //le drapeau est aussi écrit dans le tableau m_tabVue
+                lcd_ecritChar(DRAPEAU);     
             }
-            else if(m_tabVue[posY-1][posX-1]==DRAPEAU)
+            else if(m_tabVue[posY-1][posX-1]==DRAPEAU)// Si la case est un drapeau, une tuile apparait aux coordonées
             {
-                m_tabVue[posY-1][posX-1]=TUILE;
+                m_tabVue[posY-1][posX-1]=TUILE;     //le tuile est aussi écrit dans le tableau m_tabVue
                 lcd_ecritChar(TUILE);
             }
             __delay_ms(25);     //Anti-rebond
         }
-        __delay_ms(100);
+        __delay_ms(100);    
     }
 }
 
@@ -162,7 +159,7 @@ void initTabVue(void)
             m_tabVue[i][j]=TUILE;
         }
     }
-    for(unsigned char k=0;k<NB_LIGNE;k++)       //rajoute un \0 a la fin des 4 tableau de 20 char, utile pour lcd_putMessage
+    for(unsigned char k=0;k<NB_LIGNE;k++)       //rajoute un '\0' a la fin des 4 tableau de 20 char, utile pour lcd_putMessage
     {
         m_tabVue[k][20]='\0';
     }
@@ -174,7 +171,7 @@ void initTabVue(void)
  */
 void afficheTabVue(void)
 {
-    for(unsigned char i =0; i<NB_LIGNE;++i)
+    for(unsigned char i =0; i<NB_LIGNE;++i) //fait afficher le tableau m_tabVue sur le LCD
     {
         lcd_gotoXY(1,i+1);
         lcd_putMessage(m_tabVue[i]);
@@ -188,7 +185,7 @@ void afficheTabVue(void)
  */
 void afficheTabMines(void)
 {
-    for(unsigned char i =0; i<NB_LIGNE;++i)
+    for(unsigned char i =0; i<NB_LIGNE;++i) //fait afficher le tableau m_tabMines sur le LCD
     {
         lcd_gotoXY(1,i+1);
         lcd_putMessage(m_tabMines[i]);
@@ -201,11 +198,11 @@ void afficheTabMines(void)
  */
 void videMines(void)
 {
-    for(unsigned char i=0;i<NB_LIGNE;i++)
+    for(unsigned char i=0;i<NB_LIGNE;i++)  
     {
-        for(unsigned char j=0;j<NB_COL;j++)
+        for(unsigned char j=0;j<NB_COL;j++)     // les deux boucles servent à parcourir toutes les deux dimensions du tableau tabMines et les remplir d'espaces
         {
-            m_tabMines[i][j]=' ';
+            m_tabMines[i][j]=' ';       
         }
     }
 }
@@ -219,18 +216,18 @@ void videMines(void)
 void rempliMines(int nb)
 {
     unsigned char x,y;
-    char mineReste=nb;
+    char mineReste=nb;  // initialise le décompteur au nombre de mines totales
     
-    videMines(); 
+    videMines();        // rempli le tableau m_tabMines d'espaces pour vider le tableau de ses mines 
     
-    while(mineReste!=0)
+    while(mineReste!=0) //pendant qu'il reste encore des mines à placer
     {
-        x=rand()%NB_LIGNE;
-        y=rand()%NB_COL;
-        if(m_tabMines[x][y]!=MINE)
+        x=rand()%NB_LIGNE;  // trouve une position aléatoire pour la variable x
+        y=rand()%NB_COL;    // trouve une position aléatoire pour la variable y
+        if(m_tabMines[x][y]!=MINE)  // si le tableau n'a pas déjà une mine au coordonées trouvées aléatoirement
         {
-            m_tabMines[x][y]=MINE;
-            mineReste--;
+            m_tabMines[x][y]=MINE;  // on place la mine au coordonées
+            mineReste--;    // on enlève une mine a placer au décompteur
         }
     }
 }
@@ -272,51 +269,52 @@ void metToucheCombien(void)
  */
 char calculToucheCombien(int ligne, int colonne)
 {
-    char nombreTouche='0';
-    if(m_tabMines[ligne][colonne]!=MINE)
+    char nombreTouche='0';      //initialise le compte du nombre de mine que la tuile au coordonées  touche a zéro ( valeur ASCII de zéro)
+    
+    if(m_tabMines[ligne][colonne]!=MINE)    // si il n'y a pas de mine dans le tableau m_tabMines au coordonées (ligne,colonne)
     {
-        if(ligne!=3)
+        if(ligne!=3)        // si la ligne choisie n'est pas la derniere (la plus basse)
         {
-            if(m_tabMines[ligne+1][colonne]==MINE)
+            if(m_tabMines[ligne+1][colonne]==MINE)  //ajoute 1 a nombreTouche si la case au dessus de la case choisie est une mine
+                nombreTouche++;     
+        }
+        if(ligne!=0)     // si la ligne choisie n'est pas la premiere (la plus haute)
+        {
+            if(m_tabMines[ligne-1][colonne]==MINE)  //ajoute 1 a nombreTouche si la case sous de la case choisie est une mine
                 nombreTouche++;
         }
-        if(ligne!=0)
+        if(ligne!=3&&colonne!=0)     // si la ligne choisie n'est pas la derniere (la plus basse) et que la colonne choisie n'est pas la première (extrême gauche) ; Pourrait être dans la première condition ( le premier if(ligne!=3) mais cause plus de confusion).Meme chose pour les conditions suivantes
         {
-            if(m_tabMines[ligne-1][colonne]==MINE)
+            if(m_tabMines[ligne+1][colonne-1]==MINE)    //ajoute 1 a nombreTouche si la case en haut et à gauche de la case choisie est une mine
                 nombreTouche++;
         }
-        if(ligne!=3&&colonne!=0)
+        if(ligne!=3&&colonne!=19)   // si la ligne choisie n'est pas la derniere (la plus basse) et que la colonne choisie n'est pas la dernière (extrême droite) 
         {
-            if(m_tabMines[ligne+1][colonne-1]==MINE)
+            if(m_tabMines[ligne+1][colonne+1]==MINE)    //ajoute 1 a nombreTouche si la case en haut et à droite de la case choisie est une mine
                 nombreTouche++;
         }
-        if(ligne!=3&&colonne!=19)
+        if(ligne!=0&&colonne!=0)     // si la ligne choisie n'est pas la premiere (la plus haute) et que la colonne choisie n'est pas la première (extrême gauche)
         {
-            if(m_tabMines[ligne+1][colonne+1]==MINE)
+            if(m_tabMines[ligne-1][colonne-1]==MINE)    //ajoute 1 a nombreTouche si la case en bas et à gauche de la case choisie est une mine
                 nombreTouche++;
         }
-        if(ligne!=0&&colonne!=0)
+        if(ligne!=0&&colonne!=19)    // si la ligne choisie n'est pas la premiere (la plus haute) et que la colonne choisie n'est pas la dernière (extrême droite) 
         {
-            if(m_tabMines[ligne-1][colonne-1]==MINE)
+            if(m_tabMines[ligne-1][colonne+1]==MINE)    //ajoute 1 a nombreTouche si la case en bas et à droite de la case choisie est une mine
                 nombreTouche++;
         }
-        if(ligne!=0&&colonne!=19)
+        if(colonne!=19)     // si la colonne choisie n'est pas la dernière (extrême droite)
         {
-            if(m_tabMines[ligne-1][colonne+1]==MINE)
+            if(m_tabMines[ligne][colonne+1]==MINE)  //ajoute 1 a nombreTouche si la case en dessous et à droite de la case choisie est une mine
                 nombreTouche++;
         }
-        if(colonne!=19)
+        if(colonne!=0)  // si la colonne choisie n'est pas la première (extrême gauche)
         {
-            if(m_tabMines[ligne][colonne+1]==MINE)
-                nombreTouche++;
-        }
-        if(colonne!=0)
-        {
-            if(m_tabMines[ligne][colonne-1]==MINE)
+            if(m_tabMines[ligne][colonne-1]==MINE)  //ajoute 1 a nombreTouche si la case en dessous à gauche de la case choisie est une mine
                 nombreTouche++;
         }
     }
-    return nombreTouche;
+    return nombreTouche;    //retourne le nombre de mines touchées
 }
 
 
@@ -328,31 +326,31 @@ char calculToucheCombien(int ligne, int colonne)
  */
 void deplace(char* x, char* y)
 {
-    if(getAnalog(AXE_X)>180)       // On laisse un jeu de +- 50 (Treshold d'environ 39 %)
+    if(getAnalog(AXE_X)>180)       //si la valeur lue du potentiomètre de l'axe X est de plus de 180 on effectue un déplacement vers la gauche. Pour un meilleur contrôle,on laisse un jeu d'environ 50 autour de la valeur millieu (128)
     {
-        (*x)=(*x)-1;
-        if((*x)<1)
+        (*x)=(*x)-1;        //déplace le curseur de 1 vers la gauche
+        if((*x)<1)  // si le curseur "sort" de l'écran vers la gauche , il réapparait de la droite
             (*x)=20;
     }
-    else if(getAnalog(AXE_X)<80)
+    else if(getAnalog(AXE_X)<80)    //si la valeur lue du potentiomètre de l'axe X est de moins de 80 on effectue un déplacement vers la droite.
     {
-        (*x)=(*x)+1;
-        if((*x)>20)
+        (*x)=(*x)+1;    //déplace le curseur de 1 vers la droite
+        if((*x)>20)     // si le curseur "sort" de l'écran vers la droite , il réapparait de la gauche
             (*x)=1;
     }
-    if(getAnalog(AXE_Y)<80)       // On laisse un jeu de +- 50 (Treshold d'environ 39 %)
+    if(getAnalog(AXE_Y)<80)       //si la valeur lue du potentiomètre de l'axe Y est de moins de 80 on effectue un déplacement vers le haut.
     {
-        (*y)=(*y)-1;
-        if((*y)<1)
+        (*y)=(*y)-1;    //déplace le curseur de 1 vers le haut
+        if((*y)<1)      // si le curseur "sort" de l'écran vers le haut , il réapparait du bas
             (*y)=4;
     }
-    else if(getAnalog(AXE_Y)>180)
+    else if(getAnalog(AXE_Y)>180) //si la valeur lue du potentiomètre de l'axe Y est de plus de 180 on effectue un déplacement vers le haut.
     {
-        (*y)=(*y)+1;
-        if((*y)>4)
+        (*y)=(*y)+1;    //déplace le curseur de 1 vers le bas
+        if((*y)>4)      // si le curseur "sort" de l'écran vers le bas , il réapparait du haut
             (*y)=1;
     }
-    lcd_gotoXY((*x),(*y));
+    lcd_gotoXY((*x),(*y));      //déplace le curseur aux nouvelles coordonées
 }
  
 /*
@@ -433,7 +431,7 @@ bool gagne(int* pMines)
     unsigned char j=0;
     while((i<4)||(j<20))
     {
-        for(i;i<NB_LIGNE;i++)
+        for(i=0;i<NB_LIGNE;i++)
         {
             for(j=0;j<NB_COL;j++)
             {
@@ -455,7 +453,11 @@ bool gagne(int* pMines)
     else 
         return false;
 }
- 
+/*
+* @brief 
+* @param 
+* @return 
+*/
 void afficheGagne(void)
 {
     lcd_effaceAffichage();

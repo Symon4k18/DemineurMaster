@@ -4976,7 +4976,7 @@ extern char * strichr(const char *, int);
 extern char * strrchr(const char *, int);
 extern char * strrichr(const char *, int);
 
-# 38 "main.c"
+# 42 "main.c"
 void initialisation(void);
 void menuAccueil(void);
 void initTabVue(void);
@@ -4992,31 +4992,19 @@ char getAnalog(char canal);
 void afficheTabVue(void);
 void afficheTabMines(void);
 void afficheGagne(void);
-void openSpaces(int ligneTab, int colTab);
-void verifieToucheEspace(int *tabVerif, int ligne, int colonne, unsigned char iCount);
-void enleveEspaceAutour(char x, char y);
-
 
 
 
 char m_tabMines[4][20+1];
 char m_tabVue[4][20+1];
 
-enum direction
-{
-haut=0,
-bas,
-droite,
-gauche
-};
-
-# 75
+# 71
 void main(void)
 {
 
 unsigned char posY =4/2;
 unsigned char posX =20/2;
-int nbMines=12;
+int nbMines=1;
 bool finPartie=0;
 
 
@@ -5024,12 +5012,12 @@ initialisation();
 init_serie();
 lcd_init();
 menuAccueil();
-lcd_montreCurseur();
 
 initTabVue();
 rempliMines(nbMines);
 metToucheCombien();
 afficheTabVue();
+lcd_montreCurseur();
 while(1)
 {
 deplace(&posX,&posY);
@@ -5040,7 +5028,7 @@ finPartie=gagne(&nbMines);
 if((!demine(posX,posY))||(finPartie==1))
 {
 afficheTabMines();
-while(!PORTBbits.RB1);
+while(PORTBbits.RB1);
 initTabVue();
 rempliMines(nbMines);
 metToucheCombien();
@@ -5065,7 +5053,7 @@ _delay((unsigned long)((100)*(1000000/4000.0)));
 }
 }
 
-# 135
+# 132
 void menuAccueil(void)
 {
 
@@ -5080,7 +5068,7 @@ _delay((unsigned long)((1000)*(1000000/4000.0)));
 lcd_effaceAffichage();
 }
 
-# 156
+# 153
 void initTabVue(void)
 {
 for(unsigned char i=0;i<4;i++)
@@ -5096,6 +5084,7 @@ m_tabVue[k][20]='\0';
 }
 }
 
+# 172
 void afficheTabVue(void)
 {
 for(unsigned char i =0; i<4;++i)
@@ -5105,7 +5094,7 @@ lcd_putMessage(m_tabVue[i]);
 }
 }
 
-
+# 186
 void afficheTabMines(void)
 {
 for(unsigned char i =0; i<4;++i)
@@ -5114,6 +5103,8 @@ lcd_gotoXY(1,i+1);
 lcd_putMessage(m_tabMines[i]);
 }
 }
+
+# 199
 void videMines(void)
 {
 for(unsigned char i=0;i<4;i++)
@@ -5125,7 +5116,7 @@ m_tabMines[i][j]=' ';
 }
 }
 
-# 206
+# 216
 void rempliMines(int nb)
 {
 unsigned char x,y;
@@ -5145,7 +5136,7 @@ mineReste--;
 }
 }
 
-# 234
+# 244
 void metToucheCombien(void)
 {
 char minesTouche=0;
@@ -5167,10 +5158,11 @@ m_tabMines[k][20]='\0';
 }
 }
 
-# 260
+# 270
 char calculToucheCombien(int ligne, int colonne)
 {
 char nombreTouche='0';
+
 if(m_tabMines[ligne][colonne]!=2)
 {
 if(ligne!=3)
@@ -5216,103 +5208,8 @@ nombreTouche++;
 }
 return nombreTouche;
 }
-void verifieToucheEspace(int *tabVerif, int ligne, int colonne, unsigned char iCount)
-{
-unsigned char i = iCount;
 
-if(ligne!=3)
-{
-if(m_tabMines[ligne+1][colonne]==' '&&m_tabVue[ligne+1][colonne]!=' ')
-{
-tabVerif[i]=(((ligne+1)*100)+colonne);
-i++;
-}
-}
-if(ligne!=0)
-{
-if(m_tabMines[ligne-1][colonne]==' '&&m_tabVue[ligne-1][colonne]!=' ')
-{
-tabVerif[i]=(((ligne-1)*100)+colonne);
-i++;
-}
-}
-if(colonne!=19)
-{
-if(m_tabMines[ligne][colonne+1]==' '&&m_tabVue[ligne][colonne+1]!=' ')
-{
-tabVerif[i]=((ligne*100)+(colonne+1));
-i++;
-}
-}
-if(colonne!=0)
-{
-if(m_tabMines[ligne][colonne-1]==' '&&m_tabVue[ligne][colonne-1]!=' ')
-{
-tabVerif[i]=((ligne*100)+(colonne-1));
-i++;
-}
-}
-if(ligne!=3&&colonne!=0)
-{
-if(m_tabMines[ligne+1][colonne-1]==' '&&m_tabVue[ligne+1][colonne-1]!=' ')
-{
-tabVerif[i]=((ligne*100)+(colonne-1));
-i++;
-}
-}
-if(ligne!=3&&colonne!=19)
-{
-if(m_tabMines[ligne+1][colonne+1]==' '&&m_tabVue[ligne+1][colonne+1]!=' ')
-{
-tabVerif[i]=((ligne*100)+(colonne-1));
-i++;
-}
-}
-if(ligne!=0&&colonne!=0)
-{
-if(m_tabMines[ligne-1][colonne-1]==' '&&m_tabVue[ligne-1][colonne-1]!=' ')
-{
-tabVerif[i]=((ligne*100)+(colonne-1));
-i++;
-}
-}
-if(ligne!=0&&colonne!=19)
-{
-if(m_tabMines[ligne-1][colonne+1]==' '&&m_tabVue[ligne-1][colonne+1]!=' ')
-{
-tabVerif[i]=((ligne*100)+(colonne-1));
-i++;
-}
-}
-}
-void openSpaces(int ligne, int colonne)
-{
-int caseVide[76];
-int i=0;
-unsigned char xCoord;
-unsigned char yCoord;
-
-verifieToucheEspace(caseVide, ligne, colonne, i);
-
-while(caseVide[i]!='\0')
-{
-
-xCoord=caseVide[i]/100;
-yCoord=caseVide[i]%100;
-verifieToucheEspace(caseVide, xCoord, yCoord, i);
-if(m_tabMines[xCoord][yCoord]!=2 && m_tabMines[xCoord][yCoord]!=' ')
-{
-m_tabVue[xCoord][yCoord] = m_tabMines[xCoord][yCoord];
-lcd_ecritChar(m_tabVue[xCoord][yCoord]);
-}
-else
-enleveEspaceAutour(xCoord,yCoord);
-i++;
-}
-
-}
-
-# 409
+# 327
 void deplace(char* x, char* y)
 {
 if(getAnalog(7)>180)
@@ -5342,7 +5239,7 @@ if((*y)>4)
 lcd_gotoXY((*x),(*y));
 }
 
-# 446
+# 364
 bool demine(char x, char y)
 {
 if(m_tabVue[y-1][x-1]!=3)
@@ -5360,7 +5257,7 @@ enleveTuilesAutour(x,y);
 return 1;
 }
 
-# 469
+# 387
 void enleveTuilesAutour(char x, char y)
 {
 unsigned char xTabCol=x-1;
@@ -5380,8 +5277,6 @@ if(m_tabMines[yTabLigne+j][xTabCol+i]!=2&&m_tabVue[yTabLigne+j][xTabCol+i]==1)
 {
 lcd_gotoXY(x+i,y+j);
 m_tabVue[yTabLigne+j][xTabCol+i]=m_tabMines[yTabLigne+j][xTabCol+i];
-if(m_tabMines[yTabLigne+j][xTabCol+i]==' ')
-openSpaces((yTabLigne+j),(xTabCol+i));
 lcd_ecritChar(m_tabVue[yTabLigne+j][xTabCol+i]);
 }
 if(xTabCol==19&&i==0)
@@ -5393,38 +5288,8 @@ j=1;
 }
 
 }
-void enleveEspaceAutour(char x, char y)
-{
-unsigned char xTabCol=x;
-unsigned char yTabLigne=y;
 
-
-for(signed char j=-1;j<=1;j++)
-{
-if(y==0&&j==-1)
-j=0;
-for(signed char i=-1;i<=1;i++)
-{
-if(x==0&&i==-1)
-i=0;
-
-if(m_tabMines[y+j][x+i]!=2&&m_tabVue[y+j][x+i]==1)
-{
-lcd_gotoXY((x+1+i),(y+1+j));
-m_tabVue[y+j][x+i]=m_tabMines[y+j][x+i];
-lcd_ecritChar(m_tabVue[y+j][x+i]);
-}
-if(x==19&&i==0)
-i=1;
-
-}
-if(y==3&&j==0)
-j=1;
-}
-
-}
-
-# 539
+# 426
 bool gagne(int* pMines)
 {
 unsigned char compteurBombe=0;
@@ -5433,7 +5298,7 @@ unsigned char i=0;
 unsigned char j=0;
 while((i<4)||(j<20))
 {
-for(i;i<4;i++)
+for(i=0;i<4;i++)
 {
 for(j=0;j<20;j++)
 {
@@ -5466,7 +5331,7 @@ lcd_putMessage("+1 Mine");
 _delay((unsigned long)((2500)*(1000000/4000.0)));
 }
 
-# 585
+# 472
 char getAnalog(char canal)
 {
 ADCON0bits.CHS = canal;
@@ -5477,7 +5342,7 @@ while (ADCON0bits.GO_DONE == 1)
 return ADRESH;
 }
 
-# 602
+# 489
 void initialisation(void)
 {
 TRISD = 0;
