@@ -363,19 +363,19 @@ void deplace(char* x, char* y)
  */
 bool demine(char x, char y)
 {
-    if(m_tabVue[y-1][x-1]!=DRAPEAU)
+    if(m_tabVue[y-1][x-1]!=DRAPEAU) // si la case choisie n'est pas un drapeau
     {
-        if(m_tabMines[y-1][x-1]==MINE&&m_tabVue[y-1][x-1]!=DRAPEAU)
-            return false;
-        else if(m_tabMines[y-1][x-1]!=MINE && m_tabMines[y-1][x-1]!=' ')
+        if(m_tabMines[y-1][x-1]==MINE) //si la case choisie est une mine
+            return false;   // signale aux programme que le joueur a perdu 
+        else if(m_tabMines[y-1][x-1]!=MINE && m_tabMines[y-1][x-1]!=' ')    // si la case choisie n'est pas une mine ni un espace
         {
-            m_tabVue[y-1][x-1] = m_tabMines[y-1][x-1];
-            lcd_ecritChar(m_tabVue[y-1][x-1]);
+            m_tabVue[y-1][x-1] = m_tabMines[y-1][x-1];  //mets dans m_tabVue le vrai contenu de la case  
+            lcd_ecritChar(m_tabVue[y-1][x-1]);      //affiche le case dévoilée dans m_tabVue
         }
-        else
-            enleveTuilesAutour(x,y);   
+        else        //si la case choisie est un espace
+            enleveTuilesAutour(x,y);    //affiche les tuiles adjacentes à la case
     }
-    return true;
+    return true;        //signale au programme que le joueur n'a pas perdu
 }
 
 /*
@@ -386,30 +386,36 @@ bool demine(char x, char y)
  */
 void enleveTuilesAutour(char x, char y)
 {
-    unsigned char xTabCol=x-1;
-    unsigned char yTabLigne=y-1;    
+    unsigned char xTabCol=x-1;      //initialisation des coordonnées en X pour le tableau ( change de 1-20 à 0-19)
+    unsigned char yTabLigne=y-1;     //initialisation des coordonnées en Y pour le tableau ( change de 1-4 à 0-3)
 
 
-    for(signed char j=-1;j<=1;j++)
+    for(signed char j=-1;j<=1;j++)  // valeur additionnée a la coordonée y pour vérifier les cases à gauche et à droite de la case choisie
     {
-        if(yTabLigne==0&&j==-1)
-            j=0;            //Evalue si la ligne est la premiere ( 0 ) et part le compteur i a zero de facon a ne pas ecrire dans la ligne -1
-        for(signed char i=-1;i<=1;i++)
+        if(yTabLigne==0&&j==-1) //Evalue si la ligne est la premiere ( 0 ) et part le compteur j à zero de facon à ne pas ecrire dans la ligne -1
+            j=0;            
+        for(signed char i=-1;i<=1;i++)   // valeur additionnée a la coordonée x pour vérifier les cases au dessus et en dessous de la case choisie
         {
-            if(xTabCol==0&&i==-1) 
+            if(xTabCol==0&&i==-1)   //Evalue si la colonne est la premiere ( 0 ) et part le compteur i à zero de facon à ne pas ecrire dans la colonne -1
                 i=0;
             
-            if(m_tabMines[yTabLigne+j][xTabCol+i]!=MINE&&m_tabVue[yTabLigne+j][xTabCol+i]==TUILE)
+//            if(m_tabMines[yTabLigne+j][xTabCol+i]!=MINE&&m_tabVue[yTabLigne+j][xTabCol+i]==TUILE)       //verifie toutes les tuiles autour de la case sélectionnées si la case n'est pas une mine
+//            {
+//                lcd_gotoXY(x+i,y+j);
+//                m_tabVue[yTabLigne+j][xTabCol+i]=m_tabMines[yTabLigne+j][xTabCol+i];
+//                lcd_ecritChar(m_tabVue[yTabLigne+j][xTabCol+i]);
+//            }
+            if(m_tabVue[yTabLigne+j][xTabCol+i]==TUILE)       //verifie si la case a déja été révélée ou contient un drapeau 
             {
                 lcd_gotoXY(x+i,y+j);
                 m_tabVue[yTabLigne+j][xTabCol+i]=m_tabMines[yTabLigne+j][xTabCol+i];
                 lcd_ecritChar(m_tabVue[yTabLigne+j][xTabCol+i]);
             }
-            if(xTabCol==19&&i==0)
+            if(xTabCol==19&&i==0)   //Evalue si la colonne est la derniere ( 19 ) et termine le compteur i à zero de facon à ne pas ecrire dans la colonne 20 ( qui n'existe pas dans m_tabVue et m_tabMines))
                 i=1;
             
         }
-        if(yTabLigne==3&&j==0)
+        if(yTabLigne==3&&j==0)  //Evalue si la ligne est la derniere ( 3 ) et termine le compteur j à zero de facon à ne pas ecrire dans la ligne 4 ( qui n'existe pas dans m_tabVue et m_tabMines))
             j=1;
     }
 
@@ -425,17 +431,18 @@ void enleveTuilesAutour(char x, char y)
  */
 bool gagne(int* pMines)
 {
-    unsigned char compteurBombe=0;
-    unsigned char resteTuiles=0;
+    unsigned char compteurBombe=0;      //initialisation du compteur de mines isolées ( soit avec drapeau ou non)
+    //unsigned char resteTuiles=0;        //initialisation du compteur de tuiles qui n'est pas sur une mine restante 
     unsigned char i=0;
     unsigned char j=0;
-    while((i<4)||(j<20))
+    /*
+    while((i<4)||(j<20))        //verifier pourquoi ???????
     {
-        for(i=0;i<NB_LIGNE;i++)
+        for(i=0;i<NB_LIGNE;i++)         
         {
             for(j=0;j<NB_COL;j++)
             {
-                if((m_tabVue[i][j]==TUILE||m_tabVue[i][j]==DRAPEAU)&&m_tabMines[i][j]==MINE)
+                if((m_tabVue[i][j]==TUILE||m_tabVue[i][j]==DRAPEAU)&&m_tabMines[i][j]==MINE)    //augmente le compteur de mines s'il
                 {
                     compteurBombe++;
                 }
@@ -446,25 +453,41 @@ bool gagne(int* pMines)
     }
     if(compteurBombe==(*pMines)&&(!resteTuiles))
     {
-        afficheGagne();
-        (*pMines)++;
-        return true;
+        afficheGagne();     //affiche le message du gagnant 
+        (*pMines)++;        //augmente le nombre de mines de 1
+        return true;        //retourne vrai pour signaler que le joueur a gagné et qu'une nouvelle partie devra commencer
+    }*/
+    for(i=0;i<NB_LIGNE;i++)         
+    {
+        for(j=0;j<NB_COL;j++)
+        {
+            if((m_tabVue[i][j]==TUILE||m_tabVue[i][j]==DRAPEAU))    //parcours toutes les tuiles et compte le nombre de tuiles et drapeaux au total
+            {
+                compteurBombe++;
+            }
+        }
+    }
+    if(compteurBombe==(*pMines))        //si le compte total de tuiles et drapeau sont équivalent au nombre de mines totales, les mines sont tous trouvées
+    {
+        afficheGagne();     //affiche le message du gagnant 
+        (*pMines)++;        //augmente le nombre de mines de 1
+        return true;        //retourne vrai pour signaler que le joueur a gagné et qu'une nouvelle partie devra commencer
     }
     else 
-        return false;
+        return false;   //retourne faux s'il reste des tuiles a enlever
 }
 /*
-* @brief 
-* @param 
-* @return 
+* @brief Affiche le message du gagnant
+* @param Aucun
+* @return Rien
 */
 void afficheGagne(void)
 {
-    lcd_effaceAffichage();
+    lcd_effaceAffichage();      
     lcd_gotoXY(5,2);
-    lcd_putMessage("YOU WIN!");
+    lcd_putMessage("YOU WIN!");     //affiche le string "VOUS AVEZ GAGNEZ" en Anglais
     lcd_gotoXY(6,3);
-    lcd_putMessage("+1 Mine");
+    lcd_putMessage("+1 Mine");      
     __delay_ms(2500);
 }
 /*
