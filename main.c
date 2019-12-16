@@ -399,12 +399,6 @@ void enleveTuilesAutour(char x, char y)
             if(xTabCol==0&&i==-1)   //Evalue si la colonne est la premiere ( 0 ) et part le compteur i à zero de facon à ne pas ecrire dans la colonne -1
                 i=0;
             
-//            if(m_tabMines[yTabLigne+j][xTabCol+i]!=MINE&&m_tabVue[yTabLigne+j][xTabCol+i]==TUILE)       //verifie toutes les tuiles autour de la case sélectionnées si la case n'est pas une mine
-//            {
-//                lcd_gotoXY(x+i,y+j);
-//                m_tabVue[yTabLigne+j][xTabCol+i]=m_tabMines[yTabLigne+j][xTabCol+i];
-//                lcd_ecritChar(m_tabVue[yTabLigne+j][xTabCol+i]);
-//            }
             if(m_tabVue[yTabLigne+j][xTabCol+i]==TUILE)       //verifie si la case a déja été révélée ou contient un drapeau 
             {
                 lcd_gotoXY(x+i,y+j);
@@ -431,35 +425,11 @@ void enleveTuilesAutour(char x, char y)
  */
 bool gagne(int* pMines)
 {
-    unsigned char compteurBombe=0;      //initialisation du compteur de mines isolées ( soit avec drapeau ou non)
-    //unsigned char resteTuiles=0;        //initialisation du compteur de tuiles qui n'est pas sur une mine restante 
-    unsigned char i=0;
-    unsigned char j=0;
-    /*
-    while((i<4)||(j<20))        //verifier pourquoi ???????
+    unsigned char compteurBombe=0;      //initialisation du compteur de mines isolées ( soit avec drapeau ou non)   //initialisation du compteur de tuiles qui n'est pas sur une mine restante 
+
+    for(unsigned char i=0;i<NB_LIGNE;i++)         
     {
-        for(i=0;i<NB_LIGNE;i++)         
-        {
-            for(j=0;j<NB_COL;j++)
-            {
-                if((m_tabVue[i][j]==TUILE||m_tabVue[i][j]==DRAPEAU)&&m_tabMines[i][j]==MINE)    //augmente le compteur de mines s'il
-                {
-                    compteurBombe++;
-                }
-                else if((m_tabVue[i][j]==TUILE||m_tabVue[i][j]==DRAPEAU)&&m_tabMines[i][j]!=MINE)
-                    resteTuiles++;
-            }
-        }
-    }
-    if(compteurBombe==(*pMines)&&(!resteTuiles))
-    {
-        afficheGagne();     //affiche le message du gagnant 
-        (*pMines)++;        //augmente le nombre de mines de 1
-        return true;        //retourne vrai pour signaler que le joueur a gagné et qu'une nouvelle partie devra commencer
-    }*/
-    for(i=0;i<NB_LIGNE;i++)         
-    {
-        for(j=0;j<NB_COL;j++)
+        for(unsigned char j=0;j<NB_COL;j++)
         {
             if((m_tabVue[i][j]==TUILE||m_tabVue[i][j]==DRAPEAU))    //parcours toutes les tuiles et compte le nombre de tuiles et drapeaux au total
             {
