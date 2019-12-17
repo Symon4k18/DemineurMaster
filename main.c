@@ -122,7 +122,6 @@ void main(void)
     }
 }
 
-
 /**
  * @brief  Affichage de l'écran d'accueil ; Affiche le numéro du laboratoire 
  * ainsi que mon nom
